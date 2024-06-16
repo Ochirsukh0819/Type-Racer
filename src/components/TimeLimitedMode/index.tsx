@@ -11,10 +11,9 @@ import { StatisticType } from "@/type";
 
 function TimeLimitedMode() {
   const [text, setText] = useState([]);
-
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [value, setValue] = useState("");
-  const [completedWords, setCompletedWords] = useState<any>([]);
+  const [completedWords, setCompletedWords] = useState<any[]>([]);
   const [currentWordCorrectness, setCurrentWordCorrectness] = useState([]);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isTimeUp, setIsTimeUp] = useState(false);
@@ -22,8 +21,8 @@ function TimeLimitedMode() {
   const [wpm, setWpm] = useState(0);
   const [test, setTest] = useState<StatisticType[]>([]);
   const [isBoolean, setIsBoolean] = useState(false);
+  const [highScore, setHighScore] = useState(0);
 
-  // fetch data
   useEffect(() => {
     async function fetchData() {
       const data = await getTextData();
@@ -31,9 +30,15 @@ function TimeLimitedMode() {
       setText(words);
     }
     fetchData();
+
+    if (typeof window !== "undefined") {
+      const storedHighScore = localStorage.getItem("highScore");
+      if (storedHighScore) {
+        setHighScore(parseInt(storedHighScore, 10));
+      }
+    }
   }, []);
 
-  // timer
   useEffect(() => {
     let timer: any;
     if (timerStarted) {
@@ -44,19 +49,18 @@ function TimeLimitedMode() {
             calculateWPM();
             setIsTimeUp(true);
             setIsBoolean(true);
-            localStorage.setItem("highScore", String(wpm));
+            if (typeof window !== "undefined") {
+              localStorage.setItem("highScore", String(wpm));
+            }
             return 0;
           }
-
           return prev - 1;
         });
       }, 1000);
     }
-
     return () => clearInterval(timer);
   }, [timerStarted, wpm]);
 
-  // text bichih vyd
   const handleInputChange = (e: any) => {
     if (isTimeUp) return;
     if (!timerStarted) {
@@ -93,35 +97,35 @@ function TimeLimitedMode() {
     if (inputValue === currentWord && isLastWord) {
       setTimerStarted(false);
       setIsBoolean(true);
-      const storedHighScore = localStorage.getItem("highScore");
-      console.log(storedHighScore, " ahahhah");
-
-      if (storedHighScore !== null && wpm > parseInt(storedHighScore)) {
-        localStorage.setItem("highScore", String(wpm));
-      } else if (storedHighScore === null) {
-        localStorage.setItem("highScore", String(wpm));
+      if (typeof window !== "undefined") {
+        const storedHighScore = localStorage.getItem("highScore");
+        if (storedHighScore !== null && wpm > parseInt(storedHighScore)) {
+          localStorage.setItem("highScore", String(wpm));
+          setHighScore(wpm);
+        } else if (storedHighScore === null) {
+          localStorage.setItem("highScore", String(wpm));
+          setHighScore(wpm);
+        }
       }
     }
   };
 
   const calculateWPM = () => {
     if (timeLeft === null || completedWords.length <= 0) return;
-
-    console.log(timeLeft, completedWords);
     const totalTimeInMinutes = (60 - timeLeft) / 60;
     const wordsTyped = completedWords.length;
     const wordsPerMinute = wordsTyped / totalTimeInMinutes;
     setWpm(Math.round(wordsPerMinute));
 
-    setTest((prevTest: any) => [
+    setTest((prevTest) => [
       ...prevTest,
       { time: 60 - timeLeft, words: wordsTyped },
     ]);
   };
 
   return (
-    <section className="w-full  flex flex-col">
-      <section className="flex md:p-10 p-4 gap-6  bg-[#3a3845] justify-center ">
+    <section className="w-full flex flex-col">
+      <section className="flex md:p-10 p-4 gap-6 bg-[#3a3845] justify-center">
         <section className="lg:w-[70%] w-[90%] md:mt-0 mt-6">
           <section className="flex flex-col gap-4">
             <div className="flex gap-2 justify-between text-white">
@@ -129,7 +133,7 @@ function TimeLimitedMode() {
               <p>Хугацаа: {timeLeft}s</p>
             </div>
             <section className="bg-[#f6fbff] text-[#3A3845] py-2 px-4 rounded-md">
-              <div className="text-sm font-semibold flex flex-wrap gap-[3px] ">
+              <div className="text-sm font-semibold flex flex-wrap gap-[3px]">
                 {text.map((word: any, wordIndex) => (
                   <div
                     key={wordIndex}
@@ -173,19 +177,12 @@ function TimeLimitedMode() {
           </section>
         </section>
         <section className="w-[50%] lg:flex items-center hidden">
-          <Image src={TypingMan} alt="typingman" className="" />
+          <Image src={TypingMan} alt="typingman" />
         </section>
       </section>
       <section className="flex flex-col gap-2 p-4">
-        <h2>
-          Таны хамгийн өндөр оноо:{" "}
-          {localStorage.getItem("highScore")
-            ? localStorage.getItem("highScore")
-            : 0}{" "}
-          wpm
-        </h2>
+        <h2>Таны хамгийн өндөр оноо: {highScore} wpm</h2>
         <div className="md:w-[70%] w-[95%]">
-          {" "}
           {isBoolean && <ChartJS chartData={test} />}
         </div>
       </section>

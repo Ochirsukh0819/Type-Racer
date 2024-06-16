@@ -11,7 +11,6 @@ import { StatisticType } from "@/type";
 
 function InfiniteMode() {
   const [text, setText] = useState([]);
-
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [value, setValue] = useState("");
   const [completedWords, setCompletedWords] = useState<any>([]);
@@ -21,9 +20,17 @@ function InfiniteMode() {
   const [isBoolean, setIsBoolean] = useState(false);
   const [componentMountTime, setComponentMountTime] = useState(Date.now());
   const [timerStarted, setTimerStarted] = useState(false);
-  // fetch data
+  const [highScore, setHighScore] = useState(0);
+
   useEffect(() => {
     fetchData();
+
+    if (typeof window !== "undefined") {
+      const storedHighScore = localStorage.getItem("InfiniteScore");
+      if (storedHighScore) {
+        setHighScore(parseInt(storedHighScore, 10));
+      }
+    }
   }, []);
 
   async function fetchData() {
@@ -31,11 +38,9 @@ function InfiniteMode() {
     const words = data.split(" ");
     setText(words);
     setCurrentWordIndex(0);
-
     setCurrentWordCorrectness([]);
   }
 
-  // text bichih vyd
   const handleInputChange = (e: any) => {
     if (!timerStarted) {
       setTimerStarted(true);
@@ -73,9 +78,15 @@ function InfiniteMode() {
       const storedHighScore = localStorage.getItem("InfiniteScore");
 
       if (storedHighScore !== null && wpm > parseInt(storedHighScore)) {
-        localStorage.setItem("InfiniteScore", String(wpm));
+        if (typeof window !== "undefined") {
+          localStorage.setItem("InfiniteScore", String(wpm));
+          setHighScore(wpm);
+        }
       } else if (storedHighScore === null) {
-        localStorage.setItem("InfiniteScore", String(wpm));
+        if (typeof window !== "undefined") {
+          localStorage.setItem("InfiniteScore", String(wpm));
+          setHighScore(wpm);
+        }
       }
       fetchData();
     }
@@ -85,13 +96,10 @@ function InfiniteMode() {
     if (completedWords.length <= 0) return;
 
     const startTime = Date.now();
-    const elapsedTimeInSeconds = (startTime - componentMountTime) / 60000;
-    console.log("testTime: ", elapsedTimeInSeconds);
+    const elapsedTimeInMinutes = (startTime - componentMountTime) / 60000;
 
     const wordsTyped = completedWords.length;
-    console.log("wordsTyped: ", wordsTyped);
-    const wordsPerMinute = wordsTyped / elapsedTimeInSeconds;
-    console.log("wordsPerMinute: ", wordsPerMinute);
+    const wordsPerMinute = wordsTyped / elapsedTimeInMinutes;
     setWpm(Math.round(wordsPerMinute));
 
     setTest((prevTest: any) => [
@@ -104,15 +112,15 @@ function InfiniteMode() {
   };
 
   return (
-    <section className="w-full  flex flex-col">
-      <section className="flex p-10 gap-6  bg-[#3a3845]">
+    <section className="w-full flex flex-col">
+      <section className="flex p-10 gap-6 bg-[#3a3845]">
         <section className="lg:w-[70%] w-[90%] md:mt-0 mt-6">
           <section className="flex flex-col gap-4">
             <div className="flex gap-2 justify-between text-white">
               <h2>Доорх текст бичнэ үү</h2>
             </div>
             <section className="bg-[#f6fbff] text-[#3A3845] py-2 px-4 rounded-md">
-              <div className="text-sm font-semibold flex flex-wrap gap-[3px] ">
+              <div className="text-sm font-semibold flex flex-wrap gap-[3px]">
                 {text.map((word: any, wordIndex) => (
                   <div
                     key={wordIndex}
@@ -181,14 +189,9 @@ function InfiniteMode() {
       </section>
       <section className="flex flex-col gap-2 p-4">
         <h2 className="text-[#344258]">
-          Таны хязгааргүй текстийн хувьд хамгийн өндөр оноо:{" "}
-          {localStorage.getItem("InfiniteScore")
-            ? localStorage.getItem("InfiniteScore")
-            : 0}{" "}
-          wpm
+          Таны хязгааргүй текстийн хувьд хамгийн өндөр оноо: {highScore} wpm
         </h2>
         <div className="md:w-[70%] w-[95%]">
-          {" "}
           {isBoolean && <ChartJS chartData={test} />}
         </div>
       </section>
