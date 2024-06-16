@@ -39,6 +39,7 @@ function InfiniteMode() {
     setText(words);
     setCurrentWordIndex(0);
     setCurrentWordCorrectness([]);
+    setTest([]);
   }
 
   const handleInputChange = (e: any) => {
@@ -161,6 +162,10 @@ function InfiniteMode() {
                 <div
                   onClick={() => {
                     setIsBoolean(true);
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("InfiniteScore", String(wpm));
+                      setHighScore(wpm);
+                    }
                   }}
                 >
                   <Button buttonName="Уралдааныг дуусгах" buttonType="button" />
