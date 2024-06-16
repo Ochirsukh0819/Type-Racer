@@ -32,6 +32,7 @@ function LoginForm() {
                   setIsLoading(true);
 
                   const res = await login(email, password);
+                  console.log(res);
 
                   if (res === "invalid") {
                     toast.error("Хэрэглэгчийн нэр эсвэл нууц үг буруу байна");
